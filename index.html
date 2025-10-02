@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusStream - Distraction-Free Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', 'JetBrains Mono', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            min-height: calc(100vh - 40px);
+        }
+
+        /* Left Column - Video Section */
+        .video-section {
+            background: #111111;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #333333;
+        }
+
+        .video-player-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        .video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-title {
+            margin: 24px 0 16px 0;
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #ffffff;
+            line-height: 1.4;
+            font-family: 'Space Grotesk', sans-serif;
+            text-align: center;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(255, 215, 0, 0.05));
+            border-radius: 12px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+        }
+
+
+        /* YouTube Input Section */
+        .youtube-input-section {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid #444444;
+        }
+
+        .input-section-title {
+            font-size: 1.3rem;
+            font-weight: 400;
+            color: #ffffff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .youtube-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #444444;
+            border-radius: 8px;
+            background: #000000;
+            color: #ffffff;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .youtube-input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.2);
+        }
+
+        .youtube-input::placeholder {
+            color: #888888;
+        }
+
+        .load-btn {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #ff8c00, #ffd700);
+            color: #000000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .load-btn:hover {
+            background: linear-gradient(45deg, #ff7700, #ffcc00);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.4);
+        }
+
+        .load-btn:active {
+            transform: translateY(0);
+        }
+
+        .input-help {
+            text-align: center;
+        }
+
+        .help-text {
+            font-size: 0.75rem;
+            color: #cccccc;
+            font-weight: 500;
+        }
+
+        /* Saved Links Section */
+        .saved-links-section {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid #444444;
+        }
+
+        .saved-links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .no-saved-videos {
+            text-align: center;
+            padding: 20px;
+            color: #888888;
+            font-style: italic;
+        }
+
+        .saved-video-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .saved-video-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.6), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .saved-video-item:hover {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.3),
+                0 0 16px rgba(255, 140, 0, 0.1);
+            border-color: rgba(255, 140, 0, 0.3);
+        }
+
+        .saved-video-item:hover::before {
+            opacity: 1;
+        }
+
+        .saved-video-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .saved-video-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #ffffff;
+            line-height: 1.3;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .saved-video-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: #cccccc;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .saved-video-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            box-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+            animation: progressPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% { 
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .saved-video-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #cccccc;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.8rem;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-btn.delete {
+            color: #ff6b6b;
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .action-btn.delete:hover {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            border-color: #ff6b6b;
+            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Right Column - Focus Sidebar */
+        .focus-sidebar {
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(255, 215, 0, 0.05));
+            border-radius: 16px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.5), transparent);
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000000;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 16px rgba(255, 140, 0, 0.4);
+            position: relative;
+        }
+
+        .avatar::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            border-radius: 18px;
+            z-index: -1;
+            opacity: 0.3;
+            filter: blur(8px);
+        }
+
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #ffffff;
+            font-family: 'Space Grotesk', sans-serif;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .section {
+            background: linear-gradient(145deg, #0d0d0d, #1f1f1f);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.6), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(255, 140, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 140, 0, 0.3);
+        }
+
+        .section:hover::before {
+            opacity: 1;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Pomodoro Timer */
+        .timer-display {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .timer-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 16px;
+        }
+
+        .timer-progress {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                #ff8c00 0deg,
+                #ffd700 90deg,
+                #333333 90deg,
+                #333333 360deg
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 0 0 4px rgba(255, 140, 0, 0.1),
+                0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .timer-progress::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                rgba(255, 140, 0, 0.3) 0deg,
+                rgba(255, 215, 0, 0.2) 90deg,
+                transparent 90deg
+            );
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .timer-progress.active {
+            animation: timerPulse 3s ease-in-out infinite;
+            box-shadow: 
+                0 0 0 4px rgba(255, 140, 0, 0.3),
+                0 0 20px rgba(255, 140, 0, 0.4),
+                0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .timer-progress.active::before {
+            opacity: 1;
+            animation: timerGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: scale(1.02);
+                filter: brightness(1.1);
+            }
+        }
+
+        @keyframes timerGlow {
+            0%, 100% { 
+                opacity: 0.3;
+                transform: scale(1) rotate(0deg);
+            }
+            50% { 
+                opacity: 0.6;
+                transform: scale(1.1) rotate(180deg);
+            }
+        }
+
+        .timer-inner {
+            width: 88px;
+            height: 88px;
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #ffffff;
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 
+                inset 0 2px 4px rgba(255, 140, 0, 0.1),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .timer-controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .timer-btn {
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.85rem;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .timer-btn:hover::before {
+            left: 100%;
+        }
+
+        .timer-btn.primary {
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            color: #000000;
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+        }
+
+        .timer-btn.primary:hover {
+            background: linear-gradient(135deg, #ff7700, #ffcc00);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4);
+        }
+
+        .timer-btn.secondary {
+            background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .timer-btn.secondary:hover {
+            background: linear-gradient(145deg, #3a3a3a, #4a4a4a);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 140, 0, 0.3);
+        }
+
+        .session-counter {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #ffffff;
+            font-weight: 500;
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(255, 215, 0, 0.05));
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* To-Do List */
+        .todo-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .todo-input:focus {
+            outline: none;
+            border-color: rgba(255, 140, 0, 0.6);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 0 3px rgba(255, 140, 0, 0.2),
+                0 2px 8px rgba(255, 140, 0, 0.1);
+        }
+
+        .todo-input::placeholder {
+            color: #666666;
+        }
+
+        .todo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .todo-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.3),
+                0 0 12px rgba(255, 140, 0, 0.1);
+            border-color: rgba(255, 140, 0, 0.2);
+        }
+
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #666666;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            box-shadow: 
+                inset 0 1px 2px rgba(0, 0, 0, 0.3),
+                0 1px 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .todo-checkbox::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            opacity: 0;
+            transform: scale(0) rotate(45deg);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .todo-checkbox:hover {
+            border-color: #ff8c00;
+            box-shadow: 
+                inset 0 1px 2px rgba(0, 0, 0, 0.3),
+                0 0 8px rgba(255, 140, 0, 0.2);
+        }
+
+        .todo-checkbox.checked {
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            border-color: #ff8c00;
+            color: #000000;
+            box-shadow: 
+                0 0 12px rgba(255, 140, 0, 0.4),
+                inset 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .todo-checkbox.checked::before {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+            background: #000000;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: #666666;
+            opacity: 0.7;
+        }
+
+        /* Progress Bars */
+        .progress-item {
+            margin-bottom: 20px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #ffffff;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 1px 2px rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff8c00, #ffd700, #ff8c00);
+            background-size: 200% 100%;
+            border-radius: 6px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: progressShimmer 2s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+        }
+
+        @keyframes progressShimmer {
+            0%, 100% { background-position: 200% 0; }
+            50% { background-position: -200% 0; }
+        }
+
+        .next-video {
+            margin-top: 16px;
+            padding: 16px;
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .next-video-label {
+            font-size: 0.8rem;
+            color: #cccccc;
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .next-video-title {
+            font-size: 0.9rem;
+            color: #ffffff;
+            font-weight: 500;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* Gamification */
+        .gamification {
+            text-align: center;
+        }
+
+        .level-display {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(255, 215, 0, 0.05));
+            border-radius: 12px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .level-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.8), transparent);
+        }
+
+        .level-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+            font-family: 'Space Grotesk', sans-serif;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .xp-bar {
+            width: 100%;
+            height: 12px;
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .xp-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff8c00, #ffd700, #ff8c00);
+            background-size: 200% 100%;
+            border-radius: 8px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: xpPulse 3s ease-in-out infinite;
+            box-shadow: 
+                0 0 12px rgba(255, 140, 0, 0.6),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes xpPulse {
+            0%, 100% { 
+                background-position: 200% 0;
+                filter: brightness(1);
+            }
+            50% { 
+                background-position: -200% 0;
+                filter: brightness(1.2);
+            }
+        }
+
+        .xp-text {
+            font-size: 0.8rem;
+            color: #ffffff;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .streak-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            border-radius: 12px;
+            color: #000000;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: 'Space Grotesk', sans-serif;
+            box-shadow: 
+                0 4px 16px rgba(255, 140, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .streak-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: streakShine 3s ease-in-out infinite;
+        }
+
+        @keyframes streakShine {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
+        }
+
+        .streak-emoji {
+            font-size: 1.2rem;
+            animation: streakBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes streakBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Responsive styles no longer needed for sidebar layout since we switched to single column */
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .focus-sidebar {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .video-section,
+            .focus-sidebar {
+                padding: 16px;
+            }
+
+            .timer-circle {
+                width: 100px;
+                height: 100px;
+            }
+
+            .timer-progress {
+                width: 100px;
+                height: 100px;
+            }
+
+            .timer-inner {
+                width: 75px;
+                height: 75px;
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Column - Video Section -->
+        <div class="video-section">
+            <!-- YouTube Link Input -->
+            <div class="youtube-input-section">
+                <h3 class="input-section-title">🎥 Add New Content</h3>
+                <div class="input-container">
+                    <input type="text" id="youtubeInput" class="youtube-input" placeholder="Paste YouTube video, livestream, or playlist URL here...">
+                    <button id="loadVideoBtn" class="load-btn">Add & Load</button>
+                </div>
+                <div class="input-help">
+                    <span class="help-text">Supports: Videos • Livestreams • Playlists • Shorts</span>
+                </div>
+            </div>
+
+            <!-- Video Title Above Player -->
+            <h1 class="video-title" id="videoTitle">No video selected - Add a YouTube link to get started</h1>
+            
+            <!-- Debug Progress Button (for testing) -->
+            <div style="text-align: center; margin: 10px 0;">
+                <button onclick="focusStream.updateCurrentVideoProgress(focusStream.getSavedProgress(focusStream.currentVideoId) + 10)" 
+                        style="padding: 8px 16px; background: #ff8c00; color: #000; border: none; border-radius: 6px; cursor: pointer; font-family: 'Space Grotesk', sans-serif;">
+                    📈 Test Progress +10%
+                </button>
+            </div>
+            
+            <div class="video-player-container">
+                <iframe 
+                    class="video-player"
+                    id="videoFrame"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ?modestbranding=1&rel=0&showinfo=0"
+                    title="Educational Video"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <!-- Right Column - Focus Sidebar -->
+        <div class="focus-sidebar sidebar">
+            <div class="sidebar-header">
+                <div class="avatar">FS</div>
+                <h2 class="sidebar-title">Focus Hub</h2>
+            </div>
+
+            <!-- Saved Videos Section -->
+            <div class="section full-width">
+                <div class="saved-links-section" id="savedLinksSection">
+                    <h3 class="section-title">📚 Saved Videos</h3>
+                    <div class="saved-links-container" id="savedLinksContainer">
+                        <div class="no-saved-videos" id="noSavedVideos">
+                            <span class="help-text">No saved videos yet. Add a YouTube link to get started!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Your Progress Section -->
+            <div class="section">
+                <h3 class="section-title">🎮 Your Progress</h3>
+                <div class="gamification">
+                    <div class="level-display">
+                        <div class="level-text" id="levelDisplay">Level 1</div>
+                        <div class="xp-bar">
+                            <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+                        </div>
+                        <div class="xp-text" id="xpText">0/1000 XP</div>
+                    </div>
+                    <div class="streak-display">
+                        <span class="streak-emoji">🔥</span>
+                        <span id="streakCounter">0 Days</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pomodoro Timer Section -->
+            <div class="section">
+                <h3 class="section-title">🍅 Pomodoro Timer</h3>
+                <div class="timer-display">
+                    <div class="timer-circle">
+                        <div class="timer-progress" id="timerProgress">
+                            <div class="timer-inner">
+                                <span id="timerDisplay">25:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timer-controls">
+                        <button class="timer-btn primary" id="startBtn">Start</button>
+                        <button class="timer-btn secondary" id="pauseBtn">Pause</button>
+                        <button class="timer-btn secondary" id="resetBtn">Reset</button>
+                        <button class="timer-btn secondary" id="skipBtn">Skip</button>
+                    </div>
+                    <div class="session-counter" id="sessionCounter">1/4 Sessions</div>
+                </div>
+            </div>
+
+            <!-- To-Do List Section -->
+            <div class="section">
+                <h3 class="section-title">✅ To-Do List</h3>
+                <input type="text" class="todo-input" id="todoInput" placeholder="Add a new task...">
+                <div class="todo-list" id="todoList">
+                    <!-- Tasks will be added dynamically -->
+                </div>
+            </div>
+
+            <!-- Video Progress Section -->
+            <div class="section full-width">
+                <h3 class="section-title">📊 Progress Tracking</h3>
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Current Video</span>
+                        <span id="currentVideoProgress">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="currentVideoFill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="next-video">
+                    <div class="next-video-label">Current Video:</div>
+                    <div class="next-video-title" id="nextVideoTitle">No video loaded</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FocusStream {
+            constructor() {
+                this.timerMinutes = 25;
+                this.timerSeconds = 0;
+                this.isRunning = false;
+                this.timerInterval = null;
+                this.currentSession = 1;
+                this.totalSessions = 4;
+                this.currentVideoId = null;
+                this.savedVideos = this.loadSavedVideos();
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.updateTimerDisplay();
+                this.renderSavedVideos();
+                this.loadUserProgress();
+            }
+
+            initializeElements() {
+                this.timerDisplay = document.getElementById('timerDisplay');
+                this.timerProgress = document.getElementById('timerProgress');
+                this.startBtn = document.getElementById('startBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.skipBtn = document.getElementById('skipBtn');
+                this.sessionCounter = document.getElementById('sessionCounter');
+                this.todoInput = document.getElementById('todoInput');
+                this.todoList = document.getElementById('todoList');
+                this.youtubeInput = document.getElementById('youtubeInput');
+                this.loadVideoBtn = document.getElementById('loadVideoBtn');
+                this.videoFrame = document.getElementById('videoFrame');
+                this.videoTitle = document.getElementById('videoTitle');
+                this.nextVideoTitle = document.getElementById('nextVideoTitle');
+                this.savedLinksContainer = document.getElementById('savedLinksContainer');
+                this.noSavedVideos = document.getElementById('noSavedVideos');
+            }
+
+            bindEvents() {
+                this.startBtn.addEventListener('click', () => this.startTimer());
+                this.pauseBtn.addEventListener('click', () => this.pauseTimer());
+                this.resetBtn.addEventListener('click', () => this.resetTimer());
+                this.skipBtn.addEventListener('click', () => this.skipSession());
+                this.todoInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.addTodo();
+                });
+                this.loadVideoBtn.addEventListener('click', () => this.loadYouTubeVideo());
+                this.youtubeInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.loadYouTubeVideo();
+                });
+            }
+
+            startTimer() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.timerProgress.classList.add('active');
+                    this.timerInterval = setInterval(() => {
+                        if (this.timerSeconds === 0) {
+                            if (this.timerMinutes === 0) {
+                                this.completeSession();
+                                return;
+                            }
+                            this.timerMinutes--;
+                            this.timerSeconds = 59;
+                        } else {
+                            this.timerSeconds--;
+                        }
+                        this.updateTimerDisplay();
+                        this.updateTimerProgress();
+                    }, 1000);
+                }
+            }
+
+            pauseTimer() {
+                this.isRunning = false;
+                this.timerProgress.classList.remove('active');
+                clearInterval(this.timerInterval);
+            }
+
+            resetTimer() {
+                this.pauseTimer();
+                this.timerMinutes = 25;
+                this.timerSeconds = 0;
+                this.updateTimerDisplay();
+                this.updateTimerProgress();
+            }
+
+            skipSession() {
+                this.completeSession();
+            }
+
+            completeSession() {
+                this.pauseTimer();
+                this.currentSession++;
+                if (this.currentSession > this.totalSessions) {
+                    this.currentSession = 1;
+                }
+                this.updateSessionCounter();
+                this.resetTimer();
+                
+                // Add XP for completed session
+                this.addXP(50);
+            }
+
+            updateTimerDisplay() {
+                const minutes = String(this.timerMinutes).padStart(2, '0');
+                const seconds = String(this.timerSeconds).padStart(2, '0');
+                this.timerDisplay.textContent = `${minutes}:${seconds}`;
+            }
+
+            updateTimerProgress() {
+                const totalSeconds = 25 * 60;
+                const currentSeconds = this.timerMinutes * 60 + this.timerSeconds;
+                const progress = ((totalSeconds - currentSeconds) / totalSeconds) * 360;
+                this.timerProgress.style.background = `conic-gradient(#0d9488 ${progress}deg, #e2e8f0 ${progress}deg)`;
+            }
+
+            updateSessionCounter() {
+                this.sessionCounter.textContent = `${this.currentSession}/${this.totalSessions} Sessions`;
+            }
+
+            addTodo() {
+                const text = this.todoInput.value.trim();
+                if (text) {
+                    const todoItem = document.createElement('div');
+                    todoItem.className = 'todo-item';
+                    todoItem.innerHTML = `
+                        <div class="todo-checkbox" onclick="toggleTodo(this)"></div>
+                        <span class="todo-text">${text}</span>
+                    `;
+                    this.todoList.appendChild(todoItem);
+                    this.todoInput.value = '';
+                }
+            }
+
+            addXP(amount) {
+                const xpText = document.getElementById('xpText');
+                const xpFill = document.getElementById('xpFill');
+                const levelDisplay = document.getElementById('levelDisplay');
+                
+                const currentXP = parseInt(xpText.textContent.split('/')[0]);
+                const maxXP = parseInt(xpText.textContent.split('/')[1]);
+                const newXP = Math.min(currentXP + amount, maxXP);
+                
+                xpText.textContent = `${newXP}/${maxXP} XP`;
+                xpFill.style.width = `${(newXP / maxXP) * 100}%`;
+                
+                if (newXP >= maxXP) {
+                    // Level up logic
+                    const currentLevel = parseInt(levelDisplay.textContent.split(' ')[1]);
+                    levelDisplay.textContent = `Level ${currentLevel + 1}`;
+                    const newMaxXP = Math.floor(maxXP * 1.5); // Increase XP requirement by 50%
+                    xpText.textContent = `0/${newMaxXP} XP`;
+                    xpFill.style.width = '0%';
+                }
+                
+                // Save progress after XP change
+                this.saveUserProgress();
+            }
+
+            loadYouTubeVideo() {
+                const url = this.youtubeInput.value.trim();
+                if (!url) return;
+
+                const videoData = this.parseYouTubeURL(url);
+                if (videoData) {
+                    // Automatically fetch and use the video title
+                    this.fetchVideoTitle(videoData).then(updatedVideoData => {
+                        // Save video to localStorage
+                        this.saveVideo(updatedVideoData);
+                        
+                        // Load the video
+                        this.loadVideo(updatedVideoData);
+                        
+                        // Add XP for loading new content
+                        this.addXP(10);
+                    });
+                    
+                    this.youtubeInput.value = '';
+                } else {
+                    alert('Please enter a valid YouTube URL (video, livestream, playlist, or shorts)');
+                }
+            }
+
+            async fetchVideoTitle(videoData) {
+                // For now, we'll generate a descriptive title based on the video type and ID
+                // In a real implementation, you'd use YouTube API to fetch actual titles
+                let title = '';
+                
+                switch (videoData.type) {
+                    case 'playlist':
+                        title = `YouTube Playlist (${videoData.id.substring(0, 8)}...)`;
+                        break;
+                    case 'shorts':
+                        title = `YouTube Shorts Video (${videoData.id.substring(0, 8)}...)`;
+                        break;
+                    case 'live':
+                        title = `YouTube Live Stream (${videoData.id.substring(0, 8)}...)`;
+                        break;
+                    default:
+                        title = `YouTube Video (${videoData.id.substring(0, 8)}...)`;
+                        break;
+                }
+                
+                videoData.title = title;
+                return videoData;
+            }
+
+            loadVideo(videoData) {
+                this.currentVideoId = videoData.id;
+                this.videoFrame.src = videoData.embedUrl;
+                this.videoTitle.textContent = videoData.title;
+                this.nextVideoTitle.textContent = videoData.title;
+                
+                // Load saved progress for this video
+                const savedProgress = this.getSavedProgress(videoData.id);
+                this.updateCurrentVideoProgress(savedProgress);
+                
+                // Start progress simulation immediately if progress is 0
+                if (savedProgress === 0) {
+                    setTimeout(() => {
+                        this.updateCurrentVideoProgress(1);
+                    }, 1000);
+                }
+            }
+
+            saveVideo(videoData) {
+                // Check if video already exists
+                const existingIndex = this.savedVideos.findIndex(v => v.id === videoData.id);
+                
+                if (existingIndex === -1) {
+                    // Add new video with timestamp
+                    videoData.dateAdded = new Date().toISOString();
+                    videoData.progress = 0;
+                    videoData.lastWatched = null;
+                    this.savedVideos.unshift(videoData); // Add to beginning
+                } else {
+                    // Update existing video title if changed
+                    this.savedVideos[existingIndex].title = videoData.title;
+                }
+                
+                this.saveSavedVideos();
+                this.renderSavedVideos();
+            }
+
+            loadSavedVideos() {
+                try {
+                    const saved = localStorage.getItem('focusstream_saved_videos');
+                    return saved ? JSON.parse(saved) : [];
+                } catch (error) {
+                    console.error('Error loading saved videos:', error);
+                    return [];
+                }
+            }
+
+            saveSavedVideos() {
+                try {
+                    localStorage.setItem('focusstream_saved_videos', JSON.stringify(this.savedVideos));
+                } catch (error) {
+                    console.error('Error saving videos:', error);
+                }
+            }
+
+            renderSavedVideos() {
+                // Clear all existing video items first
+                const existingVideos = this.savedLinksContainer.querySelectorAll('.saved-video-item');
+                existingVideos.forEach(item => item.remove());
+                
+                if (this.savedVideos.length === 0) {
+                    this.noSavedVideos.style.display = 'block';
+                    return;
+                }
+                
+                this.noSavedVideos.style.display = 'none';
+                
+                // Add all saved videos
+                this.savedVideos.forEach(video => {
+                    const videoElement = this.createSavedVideoElement(video);
+                    this.savedLinksContainer.appendChild(videoElement);
+                });
+            }
+
+            createSavedVideoElement(video) {
+                const element = document.createElement('div');
+                element.className = 'saved-video-item';
+                element.setAttribute('data-video-id', video.id);
+                
+                const progressPercent = Math.round(video.progress || 0);
+                const typeIcon = this.getVideoTypeIcon(video.type);
+                const lastWatched = video.lastWatched ? 
+                    new Date(video.lastWatched).toLocaleDateString() : 'Never';
+                
+                element.innerHTML = `
+                    <div class="saved-video-info">
+                        <div class="saved-video-title">${typeIcon} ${video.title}</div>
+                        <div class="saved-video-meta">
+                            <div class="saved-video-progress">
+                                <div class="progress-dot" style="background: ${progressPercent > 0 ? '#ff8c00' : '#666666'}"></div>
+                                <span>${progressPercent}% watched</span>
+                            </div>
+                            <span>Last: ${lastWatched}</span>
+                        </div>
+                    </div>
+                    <div class="saved-video-actions">
+                        <button class="action-btn delete" data-video-id="${video.id}">Delete</button>
+                    </div>
+                `;
+                
+                // Add click handler to load video (excluding the delete button)
+                element.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('action-btn')) {
+                        this.loadSavedVideo(video.id);
+                    }
+                });
+                
+                // Add delete button handler
+                const deleteBtn = element.querySelector('.action-btn.delete');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.deleteSavedVideo(video.id);
+                });
+                
+                return element;
+            }
+
+            getVideoTypeIcon(type) {
+                switch (type) {
+                    case 'playlist': return '📋';
+                    case 'shorts': return '🎬';
+                    case 'live': return '🔴';
+                    default: return '📹';
+                }
+            }
+
+            loadSavedVideo(videoId) {
+                const video = this.savedVideos.find(v => v.id === videoId);
+                if (video) {
+                    // Update last watched
+                    video.lastWatched = new Date().toISOString();
+                    this.saveSavedVideos();
+                    this.renderSavedVideos();
+                    
+                    // Load the video
+                    this.loadVideo(video);
+                    
+                    // Add XP for resuming study
+                    this.addXP(5);
+                }
+            }
+
+            deleteSavedVideo(videoId) {
+                if (confirm('Are you sure you want to delete this saved video?')) {
+                    // Remove from saved videos array
+                    this.savedVideos = this.savedVideos.filter(v => v.id !== videoId);
+                    
+                    // Save to localStorage
+                    this.saveSavedVideos();
+                    
+                    // If this was the current video, clear it
+                    if (this.currentVideoId === videoId) {
+                        this.currentVideoId = null;
+                        this.videoTitle.textContent = 'No video selected - Add a YouTube link to get started';
+                        this.nextVideoTitle.textContent = 'No video loaded';
+                        this.updateCurrentVideoProgress(0);
+                    }
+                    
+                    // Immediately update the UI
+                    this.renderSavedVideos();
+                }
+            }
+
+            getSavedProgress(videoId) {
+                const video = this.savedVideos.find(v => v.id === videoId);
+                return video ? video.progress || 0 : 0;
+            }
+
+            updateCurrentVideoProgress(progress) {
+                const progressElement = document.getElementById('currentVideoProgress');
+                const fillElement = document.getElementById('currentVideoFill');
+                
+                progressElement.textContent = `${Math.round(progress)}%`;
+                fillElement.style.width = `${progress}%`;
+                
+                // Save progress if we have a current video
+                if (this.currentVideoId) {
+                    const video = this.savedVideos.find(v => v.id === this.currentVideoId);
+                    if (video) {
+                        video.progress = progress;
+                        this.saveSavedVideos();
+                        this.renderSavedVideos();
+                    }
+                }
+            }
+
+            loadUserProgress() {
+                try {
+                    const progress = localStorage.getItem('focusstream_user_progress');
+                    if (progress) {
+                        const data = JSON.parse(progress);
+                        
+                        // Load XP and level
+                        const xpText = document.getElementById('xpText');
+                        const xpFill = document.getElementById('xpFill');
+                        const levelDisplay = document.getElementById('levelDisplay');
+                        const streakCounter = document.getElementById('streakCounter');
+                        
+                        if (data.xp !== undefined) {
+                            xpText.textContent = `${data.xp}/${data.maxXP || 1000} XP`;
+                            xpFill.style.width = `${(data.xp / (data.maxXP || 1000)) * 100}%`;
+                        }
+                        
+                        if (data.level !== undefined) {
+                            levelDisplay.textContent = `Level ${data.level}`;
+                        }
+                        
+                        if (data.streak !== undefined) {
+                            streakCounter.textContent = `${data.streak} Days`;
+                        }
+                        
+                        // Load Pomodoro session data
+                        if (data.currentSession !== undefined) {
+                            this.currentSession = data.currentSession;
+                            this.updateSessionCounter();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading user progress:', error);
+                }
+            }
+
+            saveUserProgress() {
+                try {
+                    const xpText = document.getElementById('xpText').textContent;
+                    const levelText = document.getElementById('levelDisplay').textContent;
+                    const streakText = document.getElementById('streakCounter').textContent;
+                    
+                    const xpMatch = xpText.match(/(\d+)\/(\d+)/);
+                    const levelMatch = levelText.match(/Level (\d+)/);
+                    const streakMatch = streakText.match(/(\d+)/);
+                    
+                    const progressData = {
+                        xp: xpMatch ? parseInt(xpMatch[1]) : 0,
+                        maxXP: xpMatch ? parseInt(xpMatch[2]) : 1000,
+                        level: levelMatch ? parseInt(levelMatch[1]) : 1,
+                        streak: streakMatch ? parseInt(streakMatch[1]) : 0,
+                        currentSession: this.currentSession,
+                        lastSaved: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('focusstream_user_progress', JSON.stringify(progressData));
+                } catch (error) {
+                    console.error('Error saving user progress:', error);
+                }
+            }
+
+            parseYouTubeURL(url) {
+                // Remove any whitespace
+                url = url.trim();
+                
+                // YouTube URL patterns
+                const patterns = {
+                    // Regular video: youtube.com/watch?v=VIDEO_ID
+                    video: /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+                    // Playlist: youtube.com/playlist?list=PLAYLIST_ID
+                    playlist: /youtube\.com\/playlist\?list=([a-zA-Z0-9_-]+)/,
+                    // Shorts: youtube.com/shorts/VIDEO_ID
+                    shorts: /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+                    // Live stream (same as video but might have additional params)
+                    live: /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/
+                };
+
+                // Check for playlist
+                const playlistMatch = url.match(patterns.playlist);
+                if (playlistMatch) {
+                    return {
+                        type: 'playlist',
+                        id: playlistMatch[1],
+                        embedUrl: `https://www.youtube.com/embed/videoseries?list=${playlistMatch[1]}&modestbranding=1&rel=0&showinfo=0`,
+                        title: 'YouTube Playlist'
+                    };
+                }
+
+                // Check for shorts
+                const shortsMatch = url.match(patterns.shorts);
+                if (shortsMatch) {
+                    return {
+                        type: 'shorts',
+                        id: shortsMatch[1],
+                        embedUrl: `https://www.youtube.com/embed/${shortsMatch[1]}?modestbranding=1&rel=0&showinfo=0`,
+                        title: 'YouTube Shorts Video'
+                    };
+                }
+
+                // Check for regular video or livestream
+                const videoMatch = url.match(patterns.video);
+                if (videoMatch) {
+                    return {
+                        type: 'video',
+                        id: videoMatch[1],
+                        embedUrl: `https://www.youtube.com/embed/${videoMatch[1]}?modestbranding=1&rel=0&showinfo=0`,
+                        title: 'YouTube Video'
+                    };
+                }
+
+                return null;
+            }
+        }
+
+        function toggleTodo(checkbox) {
+            const todoText = checkbox.nextElementSibling;
+            checkbox.classList.toggle('checked');
+            todoText.classList.toggle('completed');
+            
+            if (checkbox.classList.contains('checked')) {
+                checkbox.innerHTML = '✓';
+                // Add XP for completed task
+                focusStream.addXP(25);
+            } else {
+                checkbox.innerHTML = '';
+            }
+        }
+
+        // Initialize the application
+        const focusStream = new FocusStream();
+
+        // Simulate video progress updates
+        setInterval(() => {
+            if (focusStream.currentVideoId) {
+                const currentProgress = document.getElementById('currentVideoProgress');
+                const current = parseInt(currentProgress.textContent);
+                
+                if (current < 100) {
+                    const newProgress = Math.min(current + 1, 100);
+                    focusStream.updateCurrentVideoProgress(newProgress);
+                    
+                    // Add XP for watching progress
+                    if (newProgress % 10 === 0) { // Every 10% completion
+                        focusStream.addXP(5);
+                    }
+                }
+            }
+        }, 5000); // Update every 5 seconds for better visibility
+    </script>
+</body>
+</html>
