@@ -7,6 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    
+    <!-- Vercel Analytics -->
+    <script defer src="https://va.vercel-scripts.com/v1/script.debug.js"></script>
     <style>
         * {
             margin: 0;
@@ -1012,26 +1015,19 @@
                     <button id="loadVideoBtn" class="load-btn">Add & Load</button>
                 </div>
                 <div class="input-help">
-                    <span class="help-text">Supports: Videos • Livestreams • Playlists • Shorts</span>
+                    <span class="help-text">Supports: Videos • Livestreams • Playlists (all videos) • Shorts</span>
                 </div>
             </div>
 
             <!-- Video Title Above Player -->
             <h1 class="video-title" id="videoTitle">No video selected - Add a YouTube link to get started</h1>
             
-            <!-- Debug Progress Button (for testing) -->
-            <div style="text-align: center; margin: 10px 0;">
-                <button onclick="focusStream.updateCurrentVideoProgress(focusStream.getSavedProgress(focusStream.currentVideoId) + 10)" 
-                        style="padding: 8px 16px; background: #ff8c00; color: #000; border: none; border-radius: 6px; cursor: pointer; font-family: 'Space Grotesk', sans-serif;">
-                    📈 Test Progress +10%
-                </button>
-            </div>
             
             <div class="video-player-container">
                 <iframe 
                     class="video-player"
                     id="videoFrame"
-                    src="https://www.youtube.com/embed/dQw4w9WgXcQ?modestbranding=1&rel=0&showinfo=0"
+                    src=""
                     title="Educational Video"
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -1064,7 +1060,7 @@
                 <h3 class="section-title">🎮 Your Progress</h3>
                 <div class="gamification">
                     <div class="level-display">
-                        <div class="level-text" id="levelDisplay">Level 1</div>
+                        <div class="level-text" id="levelDisplay">⚫ Iron 1</div>
                         <div class="xp-bar">
                             <div class="xp-fill" id="xpFill" style="width: 0%"></div>
                         </div>
@@ -1183,6 +1179,14 @@
                 if (!this.isRunning) {
                     this.isRunning = true;
                     this.timerProgress.classList.add('active');
+                    
+                    // Track timer start
+                    trackEvent('Pomodoro Started', {
+                        session: this.currentSession,
+                        totalSessions: this.totalSessions,
+                        timestamp: new Date().toISOString()
+                    });
+                    
                     this.timerInterval = setInterval(() => {
                         if (this.timerSeconds === 0) {
                             if (this.timerMinutes === 0) {
@@ -1215,7 +1219,20 @@
             }
 
             skipSession() {
-                this.completeSession();
+                // Skip without XP gain
+                this.pauseTimer();
+                this.currentSession++;
+                if (this.currentSession > this.totalSessions) {
+                    this.currentSession = 1;
+                }
+                this.updateSessionCounter();
+                this.resetTimer();
+                
+                // Track skipped session
+                trackEvent('Pomodoro Skipped', {
+                    session: this.currentSession - 1,
+                    timestamp: new Date().toISOString()
+                });
             }
 
             completeSession() {
@@ -1227,8 +1244,14 @@
                 this.updateSessionCounter();
                 this.resetTimer();
                 
-                // Add XP for completed session
+                // Add XP only for completed sessions (not skipped)
                 this.addXP(50);
+                
+                // Track completed session
+                trackEvent('Pomodoro Completed', {
+                    session: this.currentSession - 1,
+                    timestamp: new Date().toISOString()
+                });
             }
 
             updateTimerDisplay() {
@@ -1275,16 +1298,93 @@
                 xpFill.style.width = `${(newXP / maxXP) * 100}%`;
                 
                 if (newXP >= maxXP) {
-                    // Level up logic
-                    const currentLevel = parseInt(levelDisplay.textContent.split(' ')[1]);
-                    levelDisplay.textContent = `Level ${currentLevel + 1}`;
+                    // Level up logic with Valorant rank system
+                    const currentLevel = parseInt(levelDisplay.textContent.match(/\d+/)[0]);
+                    const newLevel = currentLevel + 1;
+                    const newRank = this.getValorantRank(newLevel);
+                    levelDisplay.textContent = newRank.name;
+                    
                     const newMaxXP = Math.floor(maxXP * 1.5); // Increase XP requirement by 50%
                     xpText.textContent = `0/${newMaxXP} XP`;
                     xpFill.style.width = '0%';
+                    
+                    // Show rank up notification
+                    this.showRankUpNotification(newRank);
                 }
                 
                 // Save progress after XP change
                 this.saveUserProgress();
+            }
+
+            getValorantRank(level) {
+                const ranks = [
+                    { level: 1, name: "⚫ Iron 1", symbol: "⚫", tier: "Iron", number: 1 },
+                    { level: 2, name: "⚫ Iron 2", symbol: "⚫", tier: "Iron", number: 2 },
+                    { level: 3, name: "⚫ Iron 3", symbol: "⚫", tier: "Iron", number: 3 },
+                    { level: 4, name: "🟤 Bronze 1", symbol: "🟤", tier: "Bronze", number: 1 },
+                    { level: 5, name: "🟤 Bronze 2", symbol: "🟤", tier: "Bronze", number: 2 },
+                    { level: 6, name: "🟤 Bronze 3", symbol: "🟤", tier: "Bronze", number: 3 },
+                    { level: 7, name: "🥈 Silver 1", symbol: "🥈", tier: "Silver", number: 1 },
+                    { level: 8, name: "🥈 Silver 2", symbol: "🥈", tier: "Silver", number: 2 },
+                    { level: 9, name: "🥈 Silver 3", symbol: "🥈", tier: "Silver", number: 3 },
+                    { level: 10, name: "🥇 Gold 1", symbol: "🥇", tier: "Gold", number: 1 },
+                    { level: 11, name: "🥇 Gold 2", symbol: "🥇", tier: "Gold", number: 2 },
+                    { level: 12, name: "🥇 Gold 3", symbol: "🥇", tier: "Gold", number: 3 },
+                    { level: 13, name: "💎 Platinum 1", symbol: "💎", tier: "Platinum", number: 1 },
+                    { level: 14, name: "💎 Platinum 2", symbol: "💎", tier: "Platinum", number: 2 },
+                    { level: 15, name: "💎 Platinum 3", symbol: "💎", tier: "Platinum", number: 3 },
+                    { level: 16, name: "💠 Diamond 1", symbol: "💠", tier: "Diamond", number: 1 },
+                    { level: 17, name: "💠 Diamond 2", symbol: "💠", tier: "Diamond", number: 2 },
+                    { level: 18, name: "💠 Diamond 3", symbol: "💠", tier: "Diamond", number: 3 },
+                    { level: 19, name: "🔥 Immortal 1", symbol: "🔥", tier: "Immortal", number: 1 },
+                    { level: 20, name: "🔥 Immortal 2", symbol: "🔥", tier: "Immortal", number: 2 },
+                    { level: 21, name: "🔥 Immortal 3", symbol: "🔥", tier: "Immortal", number: 3 },
+                    { level: 22, name: "⭐ Radiant", symbol: "⭐", tier: "Radiant", number: 1 }
+                ];
+                
+                // Find the rank for the level, or return the highest rank if level exceeds max
+                const rank = ranks.find(r => r.level === level) || ranks[ranks.length - 1];
+                return rank;
+            }
+
+            showRankUpNotification(newRank) {
+                // Create a temporary notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(135deg, #ff8c00, #ffd700);
+                    color: #000;
+                    padding: 20px 30px;
+                    border-radius: 16px;
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-weight: 700;
+                    font-size: 1.2rem;
+                    z-index: 10000;
+                    box-shadow: 0 8px 32px rgba(255, 140, 0, 0.6);
+                    animation: rankUpPulse 3s ease-in-out;
+                `;
+                notification.textContent = `🎉 RANK UP! ${newRank.name} 🎉`;
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 3 seconds
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 3000);
+                
+                // Add CSS animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes rankUpPulse {
+                        0%, 100% { transform: translate(-50%, -50%) scale(1); }
+                        50% { transform: translate(-50%, -50%) scale(1.1); }
+                    }
+                `;
+                document.head.appendChild(style);
+                setTimeout(() => document.head.removeChild(style), 3000);
             }
 
             loadYouTubeVideo() {
@@ -1293,6 +1393,13 @@
 
                 const videoData = this.parseYouTubeURL(url);
                 if (videoData) {
+                    // Track video loading
+                    trackEvent('Video Loaded', {
+                        videoType: videoData.type,
+                        videoId: videoData.id,
+                        timestamp: new Date().toISOString()
+                    });
+
                     // Automatically fetch and use the video title
                     this.fetchVideoTitle(videoData).then(updatedVideoData => {
                         // Save video to localStorage
@@ -1301,13 +1408,16 @@
                         // Load the video
                         this.loadVideo(updatedVideoData);
                         
-                        // Add XP for loading new content
-                        this.addXP(10);
+                        // No XP for just adding videos - XP should be earned through actual studying
                     });
                     
                     this.youtubeInput.value = '';
                 } else {
                     alert('Please enter a valid YouTube URL (video, livestream, playlist, or shorts)');
+                    trackEvent('Invalid URL Attempted', {
+                        url: url,
+                        timestamp: new Date().toISOString()
+                    });
                 }
             }
 
@@ -1315,19 +1425,20 @@
                 // For now, we'll generate a descriptive title based on the video type and ID
                 // In a real implementation, you'd use YouTube API to fetch actual titles
                 let title = '';
+                const timestamp = new Date().toLocaleDateString();
                 
                 switch (videoData.type) {
                     case 'playlist':
-                        title = `YouTube Playlist (${videoData.id.substring(0, 8)}...)`;
+                        title = `📋 Playlist: Learning Collection (Added ${timestamp})`;
                         break;
                     case 'shorts':
-                        title = `YouTube Shorts Video (${videoData.id.substring(0, 8)}...)`;
+                        title = `🎬 Short: Quick Learning (${videoData.id.substring(0, 6)}...)`;
                         break;
                     case 'live':
-                        title = `YouTube Live Stream (${videoData.id.substring(0, 8)}...)`;
+                        title = `🔴 Live: Stream Session (${videoData.id.substring(0, 6)}...)`;
                         break;
                     default:
-                        title = `YouTube Video (${videoData.id.substring(0, 8)}...)`;
+                        title = `📹 Video: Study Material (${videoData.id.substring(0, 6)}...)`;
                         break;
                 }
                 
@@ -1345,12 +1456,7 @@
                 const savedProgress = this.getSavedProgress(videoData.id);
                 this.updateCurrentVideoProgress(savedProgress);
                 
-                // Start progress simulation immediately if progress is 0
-                if (savedProgress === 0) {
-                    setTimeout(() => {
-                        this.updateCurrentVideoProgress(1);
-                    }, 1000);
-                }
+                // Remove automatic progress increment - progress should only increase when actually watching
             }
 
             saveVideo(videoData) {
@@ -1421,7 +1527,7 @@
                 
                 element.innerHTML = `
                     <div class="saved-video-info">
-                        <div class="saved-video-title">${typeIcon} ${video.title}</div>
+                        <div class="saved-video-title" id="title-${video.id}">${typeIcon} ${video.title}</div>
                         <div class="saved-video-meta">
                             <div class="saved-video-progress">
                                 <div class="progress-dot" style="background: ${progressPercent > 0 ? '#ff8c00' : '#666666'}"></div>
@@ -1431,6 +1537,7 @@
                         </div>
                     </div>
                     <div class="saved-video-actions">
+                        <button class="action-btn edit" data-video-id="${video.id}">Edit</button>
                         <button class="action-btn delete" data-video-id="${video.id}">Delete</button>
                     </div>
                 `;
@@ -1442,6 +1549,13 @@
                     }
                 });
                 
+                // Add edit button handler
+                const editBtn = element.querySelector('.action-btn.edit');
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.editVideoTitle(video.id);
+                });
+
                 // Add delete button handler
                 const deleteBtn = element.querySelector('.action-btn.delete');
                 deleteBtn.addEventListener('click', (e) => {
@@ -1454,7 +1568,7 @@
 
             getVideoTypeIcon(type) {
                 switch (type) {
-                    case 'playlist': return '📋';
+                    case 'playlist': return '📚';
                     case 'shorts': return '🎬';
                     case 'live': return '🔴';
                     default: return '📹';
@@ -1472,8 +1586,37 @@
                     // Load the video
                     this.loadVideo(video);
                     
-                    // Add XP for resuming study
-                    this.addXP(5);
+                    // No XP for just loading videos - XP should be earned through actual studying
+                }
+            }
+
+            editVideoTitle(videoId) {
+                const video = this.savedVideos.find(v => v.id === videoId);
+                if (!video) return;
+                
+                const newTitle = prompt('Edit video title:', video.title);
+                if (newTitle && newTitle.trim() !== '' && newTitle !== video.title) {
+                    // Update the video title
+                    video.title = newTitle.trim();
+                    
+                    // Save to localStorage
+                    this.saveSavedVideos();
+                    
+                    // Update current video title if this is the current video
+                    if (this.currentVideoId === videoId) {
+                        this.videoTitle.textContent = video.title;
+                        this.nextVideoTitle.textContent = video.title;
+                    }
+                    
+                    // Update the UI
+                    this.renderSavedVideos();
+                    
+                    // Track title edit
+                    trackEvent('Video Title Edited', {
+                        videoId: videoId,
+                        newTitle: newTitle,
+                        timestamp: new Date().toISOString()
+                    });
                 }
             }
 
@@ -1539,7 +1682,8 @@
                         }
                         
                         if (data.level !== undefined) {
-                            levelDisplay.textContent = `Level ${data.level}`;
+                            const rank = focusStream.getValorantRank(data.level);
+                            levelDisplay.textContent = rank.name;
                         }
                         
                         if (data.streak !== undefined) {
@@ -1564,13 +1708,29 @@
                     const streakText = document.getElementById('streakCounter').textContent;
                     
                     const xpMatch = xpText.match(/(\d+)\/(\d+)/);
-                    const levelMatch = levelText.match(/Level (\d+)/);
+                    const levelMatch = levelText.match(/(\d+)/);
                     const streakMatch = streakText.match(/(\d+)/);
+                    
+                    // Extract level from rank name or default to 1
+                    let level = 1;
+                    if (levelMatch) {
+                        level = parseInt(levelMatch[0]);
+                    } else {
+                        // If no number found, determine level from rank name
+                        const rankNames = [
+                            "Iron 1", "Iron 2", "Iron 3", "Bronze 1", "Bronze 2", "Bronze 3",
+                            "Silver 1", "Silver 2", "Silver 3", "Gold 1", "Gold 2", "Gold 3",
+                            "Platinum 1", "Platinum 2", "Platinum 3", "Diamond 1", "Diamond 2", "Diamond 3",
+                            "Immortal 1", "Immortal 2", "Immortal 3", "Radiant"
+                        ];
+                        const rankIndex = rankNames.findIndex(rank => levelText.includes(rank));
+                        level = rankIndex >= 0 ? rankIndex + 1 : 1;
+                    }
                     
                     const progressData = {
                         xp: xpMatch ? parseInt(xpMatch[1]) : 0,
                         maxXP: xpMatch ? parseInt(xpMatch[2]) : 1000,
-                        level: levelMatch ? parseInt(levelMatch[1]) : 1,
+                        level: level,
                         streak: streakMatch ? parseInt(streakMatch[1]) : 0,
                         currentSession: this.currentSession,
                         lastSaved: new Date().toISOString()
@@ -1590,22 +1750,27 @@
                 const patterns = {
                     // Regular video: youtube.com/watch?v=VIDEO_ID
                     video: /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-                    // Playlist: youtube.com/playlist?list=PLAYLIST_ID
-                    playlist: /youtube\.com\/playlist\?list=([a-zA-Z0-9_-]+)/,
+                    // Playlist: youtube.com/playlist?list=PLAYLIST_ID or youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
+                    playlist: /[?&]list=([a-zA-Z0-9_-]+)/,
+                    playlistDirect: /youtube\.com\/playlist\?list=([a-zA-Z0-9_-]+)/,
                     // Shorts: youtube.com/shorts/VIDEO_ID
                     shorts: /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
                     // Live stream (same as video but might have additional params)
                     live: /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/
                 };
 
-                // Check for playlist
+                // Check for playlist (both direct playlist links and video+playlist combos)
+                const playlistDirectMatch = url.match(patterns.playlistDirect);
                 const playlistMatch = url.match(patterns.playlist);
-                if (playlistMatch) {
+                
+                if (playlistDirectMatch || playlistMatch) {
+                    const playlistId = playlistDirectMatch ? playlistDirectMatch[1] : playlistMatch[1];
                     return {
                         type: 'playlist',
-                        id: playlistMatch[1],
-                        embedUrl: `https://www.youtube.com/embed/videoseries?list=${playlistMatch[1]}&modestbranding=1&rel=0&showinfo=0`,
-                        title: 'YouTube Playlist'
+                        id: playlistId,
+                        embedUrl: `https://www.youtube.com/embed/videoseries?list=${playlistId}&modestbranding=1&rel=0&showinfo=0`,
+                        title: 'YouTube Playlist',
+                        isPlaylist: true
                     };
                 }
 
@@ -1652,23 +1817,68 @@
         // Initialize the application
         const focusStream = new FocusStream();
 
-        // Simulate video progress updates
-        setInterval(() => {
-            if (focusStream.currentVideoId) {
-                const currentProgress = document.getElementById('currentVideoProgress');
-                const current = parseInt(currentProgress.textContent);
+        // Analytics tracking functions
+        function trackEvent(eventName, properties = {}) {
+            if (typeof va !== 'undefined') {
+                va('track', eventName, properties);
+            }
+        }
+
+        // Track app initialization
+        trackEvent('App Initialized', {
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent
+        });
+
+        // Manual progress tracking - only when user is actively watching
+        let lastActivityTime = Date.now();
+        let watchingTimer = null;
+        
+        // Track user activity to determine if they're actively watching
+        function trackUserActivity() {
+            lastActivityTime = Date.now();
+        }
+        
+        // Add event listeners for user activity
+        document.addEventListener('mousemove', trackUserActivity);
+        document.addEventListener('keypress', trackUserActivity);
+        document.addEventListener('click', trackUserActivity);
+        document.addEventListener('scroll', trackUserActivity);
+        
+        // Start watching timer when user is active and video is loaded
+        function startWatchingTimer() {
+            if (watchingTimer) return;
+            
+            watchingTimer = setInterval(() => {
+                const timeSinceActivity = Date.now() - lastActivityTime;
                 
-                if (current < 100) {
-                    const newProgress = Math.min(current + 1, 100);
-                    focusStream.updateCurrentVideoProgress(newProgress);
+                // Only increment progress if user was active in last 30 seconds and video is loaded
+                if (timeSinceActivity < 30000 && focusStream.currentVideoId) {
+                    const currentProgress = document.getElementById('currentVideoProgress');
+                    const current = parseInt(currentProgress.textContent);
                     
-                    // Add XP for watching progress
-                    if (newProgress % 10 === 0) { // Every 10% completion
-                        focusStream.addXP(5);
+                    if (current < 100) {
+                        const newProgress = Math.min(current + 1, 100);
+                        focusStream.updateCurrentVideoProgress(newProgress);
+                        
+                        // Add XP for watching progress
+                        if (newProgress % 10 === 0) { // Every 10% completion
+                            focusStream.addXP(5);
+                        }
+                        
+                        // Track watching activity
+                        trackEvent('Video Progress', {
+                            videoId: focusStream.currentVideoId,
+                            progress: newProgress,
+                            timestamp: new Date().toISOString()
+                        });
                     }
                 }
-            }
-        }, 5000); // Update every 5 seconds for better visibility
+            }, 10000); // Check every 10 seconds
+        }
+        
+        // Start the watching timer
+        startWatchingTimer();
     </script>
 </body>
 </html>
